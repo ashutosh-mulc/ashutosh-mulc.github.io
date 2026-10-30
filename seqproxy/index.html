@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sequence Models as Proxies for Flow-Matching-Based Alignment · BMVC 2026</title>
+    <meta name="description" content="GRUFlow and TransformerFlow replace the memoryless velocity field and ODE solver of flow-matching cross-modal alignment with sequence models that predict each trajectory state directly. BMVC 2026.">
+    <meta property="og:title" content="Sequence Models as Proxies for Flow-Matching-Based Alignment">
+    <meta property="og:description" content="BMVC 2026. Trajectory memory resolves crossing paths: up to 50× lower transport error and +2.3% 1-shot accuracy over FMA with 39% of its parameters.">
+    <meta property="og:image" content="https://scriea.github.io/seqproxy/poster.jpg">
+    <meta name="theme-color" content="#fbfaf7">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d4ed8'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='21' font-weight='700' text-anchor='middle' fill='%23fff'%3EA%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Same tokens as the homepage (../index.html). */
+        :root {
+            --bg: #fbfaf7;
+            --ink: #1c1b19;
+            --muted: #625f58;
+            --rule: #e5e2da;
+            --accent: #1d4ed8;
+            --tint: #f1efe9;
+            --serif: "Crimson Pro", Georgia, serif;
+            --sans: "Source Sans 3", system-ui, sans-serif;
+            color-scheme: light;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 1.125rem/1.6 var(--sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .wrap { max-width: 54rem; margin: 0 auto; padding: 0 1.25rem; }
+
+        a {
+            color: inherit;
+            text-decoration: underline;
+            text-decoration-color: color-mix(in srgb, var(--ink) 40%, transparent);
+            text-decoration-thickness: 1px;
+            text-underline-offset: .22em;
+            transition: color .15s, text-decoration-color .15s;
+        }
+        a:hover { color: var(--accent); text-decoration-color: currentColor; }
+        a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+        .back { display: inline-block; padding: 1.25rem 0 0; font-size: .9rem; color: var(--muted); text-decoration: none; }
+
+        /* hero */
+        header { padding: 2.5rem 0 2rem; text-align: center; }
+        .venue { margin: 0; font: 700 .75rem/1.6 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+        h1 { margin: .5rem auto 0; max-width: 40rem; font: 500 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -.01em; text-wrap: balance; }
+        .authors { margin: 1.25rem 0 0; font-size: 1.1rem; }
+        .authors span + span::before { content: "·"; margin: 0 .6rem; color: var(--muted); }
+        .aff { margin: .3rem 0 0; color: var(--muted); font-size: .95rem; }
+        .aff span + span { margin-left: 1rem; }
+        .buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+        .buttons a {
+            display: inline-block;
+            padding: .45rem 1.1rem;
+            border-radius: 999px;
+            background: var(--ink);
+            color: var(--bg);
+            font-size: .95rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .buttons a:hover { background: var(--accent); color: #fff; }
+
+        /* sections */
+        section { padding: 2.25rem 0; border-top: 1px solid var(--rule); }
+        h2 { margin: 0 0 1rem; font: 600 1.6rem/1.25 var(--serif); }
+        h3 { margin: 1.5rem 0 .5rem; font: 600 1.2rem/1.3 var(--serif); }
+        p { margin: 0; text-wrap: pretty; }
+        p + p { margin-top: .9rem; }
+
+        .embed { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+        .embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+        .tldr { font: 400 1.3rem/1.45 var(--serif); }
+
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .75rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+        .stats li { padding: 1rem 1.1rem; border-radius: 10px; background: var(--tint); }
+        .stats b { display: block; font: 600 2rem/1.1 var(--sans); }
+        .stats span { display: block; margin-top: .35rem; color: var(--muted); font-size: .9rem; line-height: 1.4; }
+
+        figure { margin: 1.25rem 0 0; }
+        figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+        figcaption { margin-top: .6rem; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+        .table { overflow-x: auto; margin: 1rem 0 0; }
+        table { width: 100%; border-collapse: collapse; font-size: .95rem; font-variant-numeric: tabular-nums; }
+        th, td { padding: .4rem .6rem; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+        th:first-child, td:first-child { text-align: left; }
+        thead th { font-weight: 600; border-bottom: 1.5px solid var(--ink); }
+        tr.ours td { background: var(--tint); }
+        td b { font-weight: 700; }
+
+        .poster { display: grid; grid-template-columns: 12rem 1fr; gap: 1.5rem; align-items: start; }
+        .poster img { width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 4px; }
+
+        pre {
+            margin: 0;
+            padding: 1rem 1.1rem;
+            overflow-x: auto;
+            border-radius: 8px;
+            background: var(--tint);
+            font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        footer { padding: 1.75rem 0 3rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .875rem; }
+
+        @media (max-width: 40rem) {
+            .poster { grid-template-columns: 1fr; }
+            .poster img { max-width: 14rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <a class="back" href="../">← Ashutosh Mulchandani</a>
+
+        <header>
+            <p class="venue">BMVC 2026 · Poster</p>
+            <h1>Sequence Models as Proxies for Flow-Matching-Based Alignment</h1>
+            <p class="authors">
+                <span>Biplab Das<sup>1,2</sup></span>
+                <span><a href="../">Ashutosh Mulchandani</a><sup>2</sup></span>
+                <span>Viswanath Gopalakrishnan<sup>1</sup></span>
+            </p>
+            <p class="aff"><span><sup>1</sup>IIIT Bangalore</span><span><sup>2</sup>Samsung R&amp;D Institute India – Bangalore</span></p>
+            <ul class="buttons">
+                <li><a href="poster.pdf">Poster</a></li>
+                <li><a href="https://www.youtube.com/watch?v=YOUTUBE_ID">Video</a></li>
+                <li><a href="#bibtex">BibTeX</a></li>
+            </ul>
+        </header>
+
+        <section aria-label="Video summary">
+            <div class="embed">
+                <iframe src="https://www.youtube-nocookie.com/embed/YOUTUBE_ID" title="Sequence Models as Proxies for Flow-Matching-Based Alignment: 3-minute summary" loading="lazy"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <section>
+            <h2>In short</h2>
+            <p class="tldr">Flow-matching alignment moves image features toward text prototypes with a memoryless velocity field, which cannot tell crossing paths apart. We replace the field and its ODE solver with a GRU or Transformer that predicts every trajectory state directly. Remembering the path resolves the ambiguity, and it takes fewer parameters.</p>
+            <ul class="stats">
+                <li><b>50×</b><span>lower transport error than FMA on crossing paths (XOR task)</span></li>
+                <li><b>+2.3%</b><span>1-shot accuracy over FMA, difficult-dataset average</span></li>
+                <li><b>39%</b><span>of FMA's parameters (GRUFlow 6.5 M vs. 16.65 M)</span></li>
+                <li><b>+22.5%</b><span>on frozen zero-shot CLIP features (TFFlow, 16-shot)</span></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Abstract</h2>
+            <p>Flow Matching has emerged as a principled framework for cross-modal alignment in few-shot learning, transporting visual features toward semantic text prototypes via a learned continuous velocity field integrated by a fixed-step ODE solver. In this work we ask: <em>can sequence models serve as effective proxies for FM-based alignment, replacing ODE integration with learned autoregressive state prediction?</em> We propose two architectures, <b>GRUFlow</b> and <b>TransformerFlow</b>, that recast cross-modal alignment as a direct state-prediction problem over <i>K</i> discrete trajectory steps, supervised by ground-truth linear interpolants at every step. GRUFlow employs a gated recurrent cell with AdaLN timestep conditioning; TransformerFlow replaces the recurrent cell with causal self-attention over the full trajectory history, providing richer non-Markovian context.</p>
+            <p>On controlled synthetic transport tasks we show that when the transport assignment is ambiguous (crossing, multi-modal, or manifold-structured paths), the sequence proxy resolves correspondences that a memoryless velocity field cannot, reducing pointwise transport error by up to 50×. Across 11 standard few-shot benchmarks, four PEFT backbones, and three shot settings, both GRUFlow (~6.5 M params) and TFFlow (~9.82 M params) match or improve over FMA (~16.65 M params), by up to +2.3% at 1-shot on difficult datasets, while using as little as 39% of FMA's parameter budget. Both architectures generalise consistently across all four PEFT methods tested, with the strongest absolute gains on weaker feature extractors, confirming that non-Markovian trajectory refinement is architecture-agnostic and most effective precisely where residual cross-modal misalignment is largest.</p>
+        </section>
+
+        <section>
+            <h2>Why memory matters</h2>
+            <p>A flow-matching velocity field <i>v</i><sub>θ</sub>(<i>x</i><sub><i>t</i></sub>, <i>t</i>) sees only the current point and time. Where two trajectories cross, both particles present the same input, so the field has to give them the same velocity. A sequence model also knows where each particle came from, so it can keep them apart.</p>
+            <figure>
+                <img src="xor.png" width="2642" height="901" loading="lazy" alt="Three panels on the XOR task. Left: four source clusters and their targets on the opposite diagonal. Middle: FMA's paths all bend through the centre and end at mixed-up clusters. Right: GRUFlow's paths go straight from each cluster to its own target.">
+                <figcaption>XOR toy task: four clusters must swap diagonals. FMA's memoryless field funnels every path through the centre and mixes up the targets; GRUFlow's hidden state keeps each cluster on its own path.</figcaption>
+            </figure>
+        </section>
+
+        <section>
+            <h2>Method</h2>
+            <figure>
+                <img src="method.png" width="1693" height="929" loading="lazy" alt="Method overview. Top: flow matching integrates a velocity field along a continuous ODE trajectory. Bottom: the sequence-model proxy, a GRU or Transformer, predicts discrete states step by step, each supervised by the flow-matching target state.">
+                <figcaption>Top: flow matching learns a velocity field and integrates an ODE. Bottom: our proxy predicts each state directly, supervised at every step by the same closed-form interpolant targets.</figcaption>
+            </figure>
+            <p style="margin-top:1.25rem">We split the path from image feature <i>x</i><sub>0</sub> to text prototype <i>x</i><sub>1</sub> into <i>K</i> = 10 steps. The target at step <i>k</i> is the closed-form interpolant <i>x</i>*<sub><i>t<sub>k</sub></i></sub> = (1 − <i>t<sub>k</sub></i>) <i>x</i><sub>0</sub> + <i>t<sub>k</sub></i> <i>x</i><sub>1</sub> + γ√(<i>t<sub>k</sub></i>(1 − <i>t<sub>k</sub></i>)) ε, so no ODE is solved, and every step gets its own loss.</p>
+            <h3>GRUFlow</h3>
+            <p>A GRU cell carries the trajectory memory in its hidden state. Three AdaLN decoder blocks condition on the timestep, and a zero-initialised residual update produces the next state. Rollout is O(<i>K</i>).</p>
+            <h3>TransformerFlow (TFFlow)</h3>
+            <p>Causal self-attention over the full history [<i>x</i><sub>0</sub>, <i>x̂</i><sub>1</sub>, …, <i>x̂</i><sub><i>k</i>−1</sub>], with four AdaLN-conditioned blocks and eight heads. The last token gives the same residual update. Rollout is O(<i>K</i>²).</p>
+            <p>Both models train closed-loop, feeding their own predictions back in exactly as at test time. At inference they unroll from <i>x</i><sub>0</sub>, ℓ<sub>2</sub>-normalise the final state and pick the nearest text prototype.</p>
+        </section>
+
+        <section>
+            <h2>Results</h2>
+
+            <h3>Synthetic transport: memory resolves crossing paths</h3>
+            <p>Six 2-D tasks with known ground-truth pairings, mean of 5 seeds. TD is the error to each sample's true target; lower is better.</p>
+            <div class="table">
+                <table>
+                    <thead><tr><th>Task</th><th>FMA TD</th><th>GRUFlow TD</th><th>FMA ÷ GRUFlow</th></tr></thead>
+                    <tbody>
+                        <tr><td>Figure-8</td><td>0.0051</td><td>0.0048</td><td>1.1×</td></tr>
+                        <tr><td>Multi-Ring</td><td>0.0724</td><td>0.0657</td><td>1.1×</td></tr>
+                        <tr><td>Spiral</td><td>0.1079</td><td>0.0715</td><td>1.5×</td></tr>
+                        <tr><td>Swiss Roll</td><td>0.0741</td><td>0.0050</td><td><b>14.8×</b></td></tr>
+                        <tr><td>Gaussian Swap</td><td>9.7235</td><td>0.4796</td><td><b>20.3×</b></td></tr>
+                        <tr><td>XOR</td><td>15.6368</td><td>0.3074</td><td><b>50.9×</b></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Few-shot classification on 11 datasets</h3>
+            <p>CLIP ViT-B/16; every refiner runs on CLIP-LoRA features. Accuracy (%) averaged over 5 difficult and 6 easy datasets.</p>
+            <div class="table">
+                <table>
+                    <thead>
+                        <tr><th rowspan="2">Method</th><th rowspan="2">Params</th><th colspan="2" style="text-align:center">1-shot</th><th colspan="2" style="text-align:center">4-shot</th><th colspan="2" style="text-align:center">16-shot</th></tr>
+                        <tr><th>Diff.</th><th>Easy</th><th>Diff.</th><th>Easy</th><th>Diff.</th><th>Easy</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>CLIP-LoRA</td><td>–</td><td>58.7</td><td>83.0</td><td>67.3</td><td>85.6</td><td>76.1</td><td>88.2</td></tr>
+                        <tr><td>+ FMA</td><td>16.65 M</td><td>59.4</td><td>83.8</td><td>69.0</td><td>86.5</td><td>77.8</td><td>88.8</td></tr>
+                        <tr class="ours"><td>+ TFFlow (ours)</td><td>9.82 M</td><td>61.1</td><td>84.2</td><td><b>70.4</b></td><td><b>86.8</b></td><td><b>78.5</b></td><td>88.9</td></tr>
+                        <tr class="ours"><td>+ GRUFlow (ours)</td><td>6.5 M</td><td><b>61.7</b></td><td><b>84.4</b></td><td>70.1</td><td><b>86.8</b></td><td><b>78.5</b></td><td><b>89.1</b></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Any PEFT backbone, 16-shot</h3>
+            <p>Gain in difficult-dataset average accuracy (points) over each backbone. The weakest backbones gain the most.</p>
+            <div class="table">
+                <table>
+                    <thead><tr><th>Backbone</th><th>Backbone avg.</th><th>+ GRUFlow</th><th>+ TFFlow</th></tr></thead>
+                    <tbody>
+                        <tr><td>Zero-shot CLIP</td><td>48.9</td><td>+15.3</td><td><b>+22.5</b></td></tr>
+                        <tr><td>CLIP-Adapter</td><td>62.6</td><td>+5.4</td><td><b>+10.2</b></td></tr>
+                        <tr><td>CoOp</td><td>71.5</td><td>+1.3</td><td><b>+2.2</b></td></tr>
+                        <tr><td>CLIP-LoRA</td><td>76.1</td><td>+2.4</td><td>+2.4</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Poster</h2>
+            <div class="poster">
+                <a href="poster.pdf"><img src="poster.jpg" width="637" height="900" loading="lazy" alt="Thumbnail of the BMVC 2026 poster"></a>
+                <p>The A0 poster summarises the motivation, method and results on one page. <a href="poster.pdf">Download the PDF</a> (2.1 MB).</p>
+            </div>
+        </section>
+
+        <section id="bibtex">
+            <h2>BibTeX</h2>
+<pre>@inproceedings{das2026sequence,
+  title     = {Sequence Models as Proxies for Flow-Matching-Based Alignment},
+  author    = {Das, Biplab and Mulchandani, Ashutosh and Gopalakrishnan, Viswanath},
+  booktitle = {Proceedings of the British Machine Vision Conference (BMVC)},
+  year      = {2026}
+}</pre>
+        </section>
+    </div>
+
+    <footer>
+        <div class="wrap"><a href="../">Ashutosh Mulchandani</a></div>
+    </footer>
+</body>
+
+</html>
